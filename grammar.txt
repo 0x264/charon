@@ -1,0 +1,46 @@
+program: func_decl
+       | class_decl
+       | stmt
+
+func_decl: "func" IDENTIFIER "(" parameters? ")" block
+parameters: IDENTIFIER ("," IDENTIFIER)*
+
+class_decl: "class" IDENTIFIER "{" func_decl* "}"
+
+stmt: var_stmt
+    | assign_stmt
+    | if_stmt
+    | while_stmt
+    | for_stmt
+    | return_stmt
+    | expr_stmt
+    | block
+
+var_stmt: "var" IDENTIFIER ("=" expr)? ";"
+
+assign_stmt: (call ".")? IDENTIFIER ("+" | "-" | "*" | "/")? "=" expr ";"
+
+if_stmt: "if" "(" expr ")" block ("else" "if" "(" expr ")" block)* ("else" block)?
+
+while_stmt: "while" "(" expr ")" block
+
+for_stmt: "for" "(" (var_stmt | assign_stmt | ";") expr? ";" expr? ")" block
+
+return_stmt: "return" expr? ";"
+
+expr_stmt: expr ";"
+
+block: "{" stmt* "}"
+
+expr: logic_or
+logic_or: logic_and ("||" logic_and)*
+logic_and: equal ("&&" equal)*
+equal: compare (("==" | "!=") compare)*
+compare: add_sub ((">" | "<" | ">=" | "<=") add_sub)*
+add_sub: multiply_divide (("+" | "-") multiply_divide)*
+multiply_divide: unary (("*" | "/") unary)*
+unary: ("!" | "-")unary | call
+call: primary (("(" arguments? ")") | "." IDENTIFIER)*
+primary: "true" | "false" | "null" | "this" | LONG | DOUBLE | STRING | IDENTIFIER | "(" expr ")"
+
+arguments: expr ("," expr)*
