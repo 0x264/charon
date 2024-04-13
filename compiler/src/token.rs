@@ -1,3 +1,4 @@
+#[derive(Clone, Debug, PartialEq)]
 pub enum TokenKind {
     // operators
     LParen,// (
@@ -49,6 +50,7 @@ pub enum TokenKind {
     String(String)
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Token {
     kind: TokenKind,
     offset: usize

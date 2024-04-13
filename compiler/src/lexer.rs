@@ -18,6 +18,7 @@ fn identifier_or_keyword(s: String) -> TokenKind {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Error {
     msg: String,
     offset: usize
@@ -242,5 +243,72 @@ impl Lexer<'_> {
         } else {
             false
         }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::lexer::{Error, Lexer};
+    use crate::token::{Token, TokenKind};
+
+    fn parse(s: &str) -> Result<Vec<Token>, Error> {
+        Lexer::new(s.as_bytes()).lex()
+    }
+
+    #[test]
+    fn test_ok() {
+        let toks = parse(r#"var a = 1.2;
+if (true) {}
+        "#);
+
+        assert!(toks.is_ok());
+
+        assert_eq!(toks.unwrap(), vec![
+            Token::new(TokenKind::Var, 0),
+            Token::new(TokenKind::Identifier("a".to_owned()), 4),
+            Token::new(TokenKind::Eq, 6),
+            Token::new(TokenKind::Double(1.2), 8),
+            Token::new(TokenKind::Semi, 11),
+            Token::new(TokenKind::If, 13),
+            Token::new(TokenKind::LParen, 16),
+            Token::new(TokenKind::True, 17),
+            Token::new(TokenKind::RParen, 21),
+            Token::new(TokenKind::LBrace, 23),
+            Token::new(TokenKind::RBrace, 24),
+        ]);
+
+        let toks = parse(r#""abc\ndef\rg\\h" 123 // def
+f();
+        "#);
+
+        assert!(toks.is_ok());
+        assert_eq!(toks.unwrap(), vec![
+            Token::new(TokenKind::String("abc\ndef\rg\\h".to_owned()),0),
+            Token::new(TokenKind::Long(123), 17),
+            Token::new(TokenKind::Identifier("f".to_owned()), 28),
+            Token::new(TokenKind::LParen, 29),
+            Token::new(TokenKind::RParen, 30),
+            Token::new(TokenKind::Semi, 31),
+        ]);
+    }
+
+    #[test]
+    fn test_err() {
+        let toks = parse(r#""abcdef"#);
+        assert!(toks.is_err());
+        assert_eq!(toks.err().unwrap(), Error::new("unclosed string literal".to_owned(), 0));
+
+        let toks = parse("var a &= 1;");
+        assert!(toks.is_err());
+        assert_eq!(toks.err().unwrap(), Error::new("not support single &".to_owned(), 6));
+
+        let toks = parse(r#""abcdef\"#);
+        assert!(toks.is_err());
+        assert_eq!(toks.err().unwrap(), Error::new("escape sequence: no char found after: \\".to_owned(), 7));
+
+        let toks = parse(r#""abcdef\d"#);
+        assert!(toks.is_err());
+        assert_eq!(toks.err().unwrap(), Error::new("unsupport escape sequence: \\d".to_owned(), 7));
     }
 }
