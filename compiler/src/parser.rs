@@ -125,13 +125,11 @@ impl Parser {
         self.consume_or_err(&TokenKind::RParen)?;
         let then = self.parse_block_with_lbrace()?;
         let stmt = if self.consume(&TokenKind::Else) {
-            let mut els;
-            if self.consume(&TokenKind::If) {
-                els = Vec::new();
-                els.push(Stmt::If(self.parse_if()?));
+            let els = if self.consume(&TokenKind::If) {
+                vec![Stmt::If(self.parse_if()?)]
             } else {
-                els = self.parse_block_with_lbrace()?;
-            }
+                self.parse_block_with_lbrace()?
+            };
             IfStmt::new(cond, then, els)
         } else {
             IfStmt::new(cond, then, Vec::new())
@@ -183,6 +181,7 @@ impl Parser {
             Expr::Getter(getter) => Stmt::Setter(SetterStmt::new(getter.owner, getter.field, op, value)),
             _ => unreachable!()
         };
+        self.consume_or_err(&TokenKind::Semi)?;
         Ok(stmt)
     }
     
@@ -287,6 +286,7 @@ impl Parser {
                     args.push(self.parse_expr()?);
                     if !self.consume(&TokenKind::Comma) {
                         self.consume_or_err(&TokenKind::RParen)?;
+                        break;
                     }
                 }
                 p = Expr::Call(CallExpr::new(Box::new(p), args));
