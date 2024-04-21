@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use crate::token::{Token, TokenKind};
+use crate::err::{Result, Error};
 
 fn identifier_or_keyword(s: String) -> TokenKind {
     match s.as_str() {
@@ -18,28 +19,6 @@ fn identifier_or_keyword(s: String) -> TokenKind {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct Error {
-    msg: String,
-    offset: usize
-}
-
-impl Error {
-    fn new(msg: String, offset: usize) -> Self {
-        Self {
-            msg,
-            offset
-        }
-    }
-
-    pub fn msg(&self) -> &str {
-        &self.msg
-    }
-    pub fn offset(&self) -> usize {
-        self.offset
-    }
-}
-
 pub struct Lexer<'a> {
     data: &'a [u8],
     offset: usize,
@@ -55,7 +34,7 @@ impl Lexer<'_> {
         }
     }
 
-    pub fn lex(mut self) -> Result<Vec<Token>, Error> {
+    pub fn lex(mut self) -> Result<Vec<Token>> {
         let mut tokens = Vec::new();
         while let Some(c) = self.peek() {
             let off = self.offset;
@@ -149,7 +128,7 @@ impl Lexer<'_> {
         Ok(tokens)
     }
 
-    fn parse_string_literal(&mut self) -> Result<TokenKind, Error> {
+    fn parse_string_literal(&mut self) -> Result<TokenKind> {
         let mut s = String::new();
 
         let off = self.offset;
@@ -178,7 +157,7 @@ impl Lexer<'_> {
         Err(Error::new("unclosed string literal".to_owned(), off - 1))
     }
 
-    fn parse_long_double(&mut self, first: char) -> Result<TokenKind, String> {
+    fn parse_long_double(&mut self, first: char) -> std::result::Result<TokenKind, String> {
         self.buf.clear();
         self.buf.push(first);
 
