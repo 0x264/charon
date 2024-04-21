@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub enum Expr {
     True,
     Flase,
@@ -13,12 +14,14 @@ pub enum Expr {
     Getter(GetterExpr)
 }
 
+#[derive(Debug)]
 pub enum BinaryOp {
     Add, Sub, Multiply, Divide,
     Gt, Lt, EqEq, GtEq, LtEq, BangEq,
     And, Or
 }
 
+#[derive(Debug)]
 pub struct BinaryExpr {
     pub left: Box<Expr>,
     pub op: BinaryOp,
@@ -31,10 +34,12 @@ impl BinaryExpr {
     }
 }
 
+#[derive(Debug)]
 pub enum UnaryOp {
     Bang, Neg
 }
 
+#[derive(Debug)]
 pub struct UnaryExpr {
     pub op: UnaryOp,
     pub expr: Box<Expr>
@@ -46,6 +51,7 @@ impl UnaryExpr {
     }
 }
 
+#[derive(Debug)]
 pub struct CallExpr {
     pub owner: Box<Expr>,
     pub args: Vec<Expr>
@@ -57,6 +63,7 @@ impl CallExpr {
     }
 }
 
+#[derive(Debug)]
 pub struct GetterExpr {
     pub owner: Box<Expr>,
     pub field: String
@@ -68,7 +75,7 @@ impl GetterExpr {
     }
 }
 
-
+#[derive(Debug)]
 pub enum Stmt {
     VarDef(VarDefStmt),
     Expr(Box<Expr>),
@@ -80,6 +87,7 @@ pub enum Stmt {
     Block(Vec<Stmt>)
 }
 
+#[derive(Debug)]
 pub struct VarDefStmt {
     pub name: String,
     pub init: Option<Box<Expr>>
@@ -91,10 +99,12 @@ impl VarDefStmt {
     }
 }
 
+#[derive(Debug)]
 pub enum AssignOp {
     Assign, AddAssign, SubAssign, MultiplyAssign, DivideAssign
 }
 
+#[derive(Debug)]
 pub struct SetVarStmt {
     pub to: String,
     pub op: AssignOp,
@@ -107,6 +117,7 @@ impl SetVarStmt {
     }
 }
 
+#[derive(Debug)]
 pub struct SetterStmt {
     pub owner: Box<Expr>,
     pub field: String,
@@ -120,6 +131,7 @@ impl SetterStmt {
     }
 }
 
+#[derive(Debug)]
 pub struct IfStmt {
     pub cond: Box<Expr>,
     pub then: Vec<Stmt>,
@@ -132,6 +144,7 @@ impl IfStmt {
     }
 }
 
+#[derive(Debug)]
 pub struct WhileStmt {
     pub cond: Box<Expr>,
     pub body: Vec<Stmt>
@@ -143,7 +156,7 @@ impl WhileStmt {
     }
 }
 
-
+#[derive(Debug)]
 pub struct FuncDecl {
     pub name: String,
     pub params: Vec<String>,
@@ -156,6 +169,7 @@ impl FuncDecl {
     }
 }
 
+#[derive(Debug)]
 pub struct ClassDecl {
     pub name: String,
     pub methods: Vec<FuncDecl>
@@ -167,6 +181,7 @@ impl ClassDecl {
     }
 }
 
+#[derive(Debug)]
 pub struct Program {
     pub funcs: Vec<FuncDecl>,
     pub classes: Vec<ClassDecl>
