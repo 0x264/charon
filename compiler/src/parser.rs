@@ -94,6 +94,14 @@ impl Parser {
             TokenKind::Var => Stmt::VarDef(self.parse_var_def()?),
             TokenKind::If => Stmt::If(self.parse_if()?),
             TokenKind::While => Stmt::While(self.parse_while()?),
+            TokenKind::Break => {
+                self.consume_or_err(&TokenKind::Semi)?;
+                Stmt::Break
+            }
+            TokenKind::Continue => {
+                self.consume_or_err(&TokenKind::Semi)?;
+                Stmt::Continue
+            }
             TokenKind::Return => Stmt::Return(self.parse_return()?),
             TokenKind::LBrace => Stmt::Block(self.parse_block()?),
             _ => {

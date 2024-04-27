@@ -9,7 +9,8 @@ stmt: var_stmt
     | assign_stmt
     | if_stmt
     | while_stmt
-    | for_stmt
+    | break_stmt
+    | continue_stmt
     | return_stmt
     | expr_stmt
     | block
@@ -21,6 +22,10 @@ assign_stmt: (call ".")? IDENTIFIER ("+" | "-" | "*" | "/")? "=" expr ";"
 if_stmt: "if" "(" expr ")" block ("else" "if" "(" expr ")" block)* ("else" block)?
 
 while_stmt: "while" "(" expr ")" block
+
+break_stmt: "break" ";"
+
+continue: "continue" ";"
 
 return_stmt: "return" expr? ";"
 

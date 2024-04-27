@@ -10,6 +10,7 @@ mod lexer;
 mod parser;
 mod ast;
 mod err;
+mod code_gen;
 
 fn main() {
     if let Err(e) = run() {
@@ -30,8 +31,10 @@ fn run() -> Result<(), Box<dyn Error>> {
                         return b;
                     } else if (a == 8) {
                         b = 2;
+                        break;
                     } else {
                         b = 3;
+                        continue;
                     }
                 }
             }
@@ -42,7 +45,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         func ff(a, b) {return a + b;}
 
         ff(12, a);
-        
+
         if (a > 3 || ff(1, 2) >= 2) {
         }
     "#;

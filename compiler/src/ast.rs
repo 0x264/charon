@@ -101,6 +101,8 @@ pub enum Stmt {
     Setter(SetterStmt),
     If(IfStmt),
     While(WhileStmt),
+    Break,
+    Continue,
     Return(Option<Box<Expr>>),
     Block(Vec<Stmt>)
 }
