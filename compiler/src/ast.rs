@@ -8,6 +8,7 @@ pub enum Expr {
     Double(f64),
     String(String),
     Binary(BinaryExpr),
+    Logic(LogicExpr),
     Unary(UnaryExpr),
     Call(CallExpr),
     GetVar(String),
@@ -17,8 +18,7 @@ pub enum Expr {
 #[derive(Debug)]
 pub enum BinaryOp {
     Add, Sub, Multiply, Divide,
-    Gt, Lt, EqEq, GtEq, LtEq, BangEq,
-    And, Or
+    Gt, Lt, EqEq, GtEq, LtEq, BangEq
 }
 
 #[derive(Debug)]
@@ -30,6 +30,24 @@ pub struct BinaryExpr {
 
 impl BinaryExpr {
     pub fn new(left: Box<Expr>, op: BinaryOp, right: Box<Expr>) -> Self {
+        Self { left, op, right }
+    }
+}
+
+#[derive(Debug)]
+pub enum LogicOp {
+    And, Or
+}
+
+#[derive(Debug)]
+pub struct LogicExpr {
+    pub left: Box<Expr>,
+    pub op: LogicOp,
+    pub right: Box<Expr>
+}
+
+impl LogicExpr {
+    pub fn new(left: Box<Expr>, op: LogicOp, right: Box<Expr>) -> Self {
         Self { left, op, right }
     }
 }

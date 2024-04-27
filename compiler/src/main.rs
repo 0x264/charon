@@ -42,10 +42,13 @@ fn run() -> Result<(), Box<dyn Error>> {
         func ff(a, b) {return a + b;}
 
         ff(12, a);
+        
+        if (a > 3 || ff(1, 2) >= 2) {
+        }
     "#;
 
     let tokens = Lexer::new(code.as_bytes()).lex()?;
     let program = Parser::new(tokens).parse()?;
-    println!("{program:?}");
+    println!("{program:#?}");
     Ok(())
 }

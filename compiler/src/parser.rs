@@ -1,5 +1,5 @@
 use std::mem;
-use crate::ast::{AssignOp, BinaryExpr, BinaryOp, CallExpr, ClassDecl, Expr, FuncDecl, GetterExpr, IfStmt, Program, SetterStmt, SetVarStmt, Stmt, UnaryExpr, UnaryOp, VarDefStmt, WhileStmt};
+use crate::ast::*;
 use crate::token::{Token, TokenKind};
 use crate::err::{Result, Error};
 
@@ -193,7 +193,7 @@ impl Parser {
         let mut left = self.logic_and()?;
         while self.consume(&TokenKind::BarBar) {
             let right = self.logic_and()?;
-            left = Expr::Binary(BinaryExpr::new(Box::new(left), BinaryOp::Or, Box::new(right)));
+            left = Expr::Logic(LogicExpr::new(Box::new(left), LogicOp::Or, Box::new(right)));
         }
         Ok(left)
     }
@@ -202,7 +202,7 @@ impl Parser {
         let mut left = self.equal()?;
         while self.consume(&TokenKind::AmpAmp) {
             let right = self.equal()?;
-            left = Expr::Binary(BinaryExpr::new(Box::new(left), BinaryOp::And, Box::new(right)));
+            left = Expr::Logic(LogicExpr::new(Box::new(left), LogicOp::And, Box::new(right)));
         }
         Ok(left)
     }
