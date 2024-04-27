@@ -1,0 +1,127 @@
+// little-endian
+
+program {
+    u8[16] magic;  // "charon-bytecode\0"
+    u8 minor_version;
+    u8 major_version;
+    u16 constant_pool_count;
+    cp_info cp[constant_pool_count]; // 与Java不同，index 0 的item是有效的
+    u16 class_count;
+    class_info classes[class_count];
+    u16 func_count;
+    func_info funcs[func_count];
+}
+
+cp_info {
+    u8 tag;
+    u8 info[];
+}
+
+cp_info.tag:
+CONSTANT_LONG   = 0x1
+CONSTANT_DOUBLE = 0x2
+CONSTANT_STRING = 0x3
+
+CONSTANT_Long_info {
+    u8 tag;// CONSTANT_LONG
+    u64 bytes;
+}
+
+CONSTANT_Double_info {
+    u8 tag; // CONSTANT_DOUBLE
+    u16 int_bits;
+}
+
+CONSTANT_String_info {
+    u8 tag;// CONSTANT_STRING
+    u16 length;// max length of constant string is u16::MAX
+    u8 bytes[length];
+}
+
+
+class_info {
+    u16 name_index;// CONSTANT_STRING
+    u16 method_count;
+    method_info methods[method_count];
+}
+
+method_info {
+    u16 name_index;// CONSTANT_STRING
+    u8 param_count;// not include 'this'
+    u16 code_length;
+    u8 code[code_length];
+}
+
+func_info {
+    u16 name_index;// CONSTANT_STRING
+    u8 param_count;
+    u16 code_length;
+    u8 code[code_length];
+}
+
+
+// op code
+const_null: load 'null' onto the operand stack
+const_true: load 'true' onto the operand stack
+const_false: load 'false' onto the operand stack
+
+lconst_m1: load '-1' onto the operand stack
+lconst_0: load '0' onto the operand stack
+lconst_1: load '1' onto the operand stack
+lconst_2: load '2' onto the operand stack
+lconst_3: load '3' onto the operand stack
+lconst_4: load '4' onto the operand stack
+lconst_5: load '5' onto the operand stack
+
+ldc: 1 arg in the code array after this opcode, u16, index in constant pool，
+    load the constant item onto the operand stack
+
+neg: negate the top data of the operand stack, the data must be Long or Double
+
+add: pop up the top two elements of the operand stack, add them together, and push the result into the operand stack,
+    the two data must be Long or Double, or both String
+
+sub: like `add`, but the data must be Long or Double
+mul: like `sub`
+div: like `sub`
+
+not: pop the top data of the operand stack, if it's true, push 'false' into the operand stack, other wise push 'true'
+
+cmp_eq: pop the top two data out of the operand stack, compare them and push the boolean result into the stack
+cmp_gt: like 'cmp_eq'
+cmp_lt: like 'cmp_eq'
+cmp_gteq: like 'cmp_eq'
+cmp_lteq: like 'cmp_eq'
+
+if: 1 arg in the code array after this opcode, u16, index in the code array,
+    pop the top data out of the operand stack, if it's true, set pc to arg
+if_not: like 'if', but when it's false, set pc to arg
+goto: 1 arg in the code array after this opcode, u16, index in the code array, set pc to arg
+
+invoke: 1 arg in the code array after this opcode, u8, argument count for this function or method(not include 'this')
+
+return: return to the caller
+
+pop: pop the top data out of the operand stack
+
+set_global: 1 arg in the code array after this opcode, u16, index in constant pool，the constant item must be CONSTANT_STRING,
+            it's the name of the global variable.
+            pop the top data out of the operand stack, set it as the global variable's value
+
+get_global: 1 arg in the code array after this opcode, u16, index in constant pool，the constant item must be CONSTANT_STRING,
+            it's the name of the global variable.
+            load the value onto the operand stack, error if the global variable not exists
+
+set_local: 1 arg in the code array after this opcode, u8, index of the local variable array
+            pop the top data out of the operand stack, set it as the local variable's value
+
+get_local: 1 arg in the code array after this opcode, u8, index of the local variable array
+           load the value onto the operand stack
+
+set_field: 1 arg in the code array after this opcode, u16, index in constant pool, the constant item must be CONSTANT_STRING,
+            it's the name of the class's field
+            pop the top data out of the operand stack, set it as the class's field's value
+
+get_member: 1 arg in the code array after this opcode, u16, index in constant pool, the constant item must be CONSTANT_STRING,
+            it's the name of the class's method of field
+            load the method or field onto the operand stack
