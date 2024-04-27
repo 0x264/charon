@@ -41,9 +41,10 @@ impl Parser {
     }
     
     fn parse_function(&mut self) -> Result<FuncDecl> {
-        let Some(Token {kind: TokenKind::Identifier(name), offset: _ }) = self.next() else {
+        let Some(Token {kind: TokenKind::Identifier(name), offset: off }) = self.next() else {
             return Err(Error::new("function name not found after keyword `func`".to_owned(), self.offset));
         };
+        let func_off = *off;
         
         let name = name.to_owned();
         
@@ -66,6 +67,11 @@ impl Parser {
         self.consume_or_err(&TokenKind::RParen)?;
         
         self.consume_or_err(&TokenKind::LBrace)?;
+        
+        if params.len() > u8::MAX as usize {
+            return Err(Error::new(format!("function: {name} has too many params"), func_off));
+        }
+        
         Ok(FuncDecl::new(name, params, self.parse_block()?))
     }
 
@@ -77,9 +83,14 @@ impl Parser {
         self.consume_or_err(&TokenKind::LBrace)?;
         
         let mut methods = Vec::new();
-        while let Some(Token {kind: TokenKind::Func, offset: _}) = self.peek() {
+        while let Some(Token {kind: TokenKind::Func, offset: off}) = self.peek() {
+            let off = *off;
             self.advance();
-            methods.push(self.parse_function()?);
+            let func = self.parse_function()?;
+            if func.params.len() >= u8::MAX as usize {// method has 'this' as arg
+                return Err(Error::new(format!("method: {name} has too many params"), off));
+            }
+            methods.push(func);
         }
         self.consume_or_err(&TokenKind::RBrace)?;
         Ok(ClassDecl::new(name, methods))

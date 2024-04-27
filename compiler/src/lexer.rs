@@ -151,7 +151,12 @@ impl Lexer<'_> {
                 } else {
                     return Err(Error::new("escape sequence: no char found after: \\".to_owned(), self.offset - 1));
                 }
-                '"' => return Ok(TokenKind::String(s)),
+                '"' => {
+                    if s.len() >= u16::MAX as usize {
+                        return Err(Error::new(format!("constant string too long, length: {}", s.len()), off));
+                    }
+                    return Ok(TokenKind::String(s))
+                },
                 _ => s.push(c)
             }
         }
