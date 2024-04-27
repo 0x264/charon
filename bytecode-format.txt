@@ -88,6 +88,7 @@ div: like `sub`
 not: pop the top data of the operand stack, if it's true, push 'false' into the operand stack, other wise push 'true'
 
 cmp_eq: pop the top two data out of the operand stack, compare them and push the boolean result into the stack
+cmp_bangeq: like 'cmp_eq'
 cmp_gt: like 'cmp_eq'
 cmp_lt: like 'cmp_eq'
 cmp_gteq: like 'cmp_eq'

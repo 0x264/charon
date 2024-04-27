@@ -11,6 +11,7 @@ mod parser;
 mod ast;
 mod err;
 mod code_gen;
+mod opcode;
 
 fn main() {
     if let Err(e) = run() {
