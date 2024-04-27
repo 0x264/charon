@@ -84,12 +84,12 @@ impl CallExpr {
 #[derive(Debug)]
 pub struct GetterExpr {
     pub owner: Box<Expr>,
-    pub field: String
+    pub member: String
 }
 
 impl GetterExpr {
-    pub fn new(owner: Box<Expr>, field: String) -> Self {
-        Self { owner, field }
+    pub fn new(owner: Box<Expr>, member: String) -> Self {
+        Self { owner, member }
     }
 }
 
@@ -119,7 +119,7 @@ impl VarDefStmt {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum AssignOp {
     Assign, AddAssign, SubAssign, MultiplyAssign, DivideAssign
 }

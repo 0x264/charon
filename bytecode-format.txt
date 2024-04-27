@@ -126,3 +126,5 @@ set_field: 1 arg in the code array after this opcode, u16, index in constant poo
 get_member: 1 arg in the code array after this opcode, u16, index in constant pool, the constant item must be CONSTANT_STRING,
             it's the name of the class's method of field
             load the method or field onto the operand stack
+
+dup: dup the top data of the operand stack

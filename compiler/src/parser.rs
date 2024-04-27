@@ -1,5 +1,6 @@
 use std::mem;
 use crate::ast::*;
+use crate::constant::ENTRY_NAME;
 use crate::token::{Token, TokenKind};
 use crate::err::{Result, Error};
 
@@ -35,7 +36,7 @@ impl Parser {
             }
         }
         
-        let entry = FuncDecl::new("$".to_owned(), Vec::new(), stmts);
+        let entry = FuncDecl::new(ENTRY_NAME.to_owned(), Vec::new(), stmts);
         funcs.push(entry);
         Ok(Program::new(funcs, classes))
     }
@@ -197,7 +198,7 @@ impl Parser {
         let value = Box::new(self.parse_expr()?);
         let stmt = match left {
             Expr::GetVar(var) => Stmt::SetVar(SetVarStmt::new(var, op, value)),
-            Expr::Getter(getter) => Stmt::Setter(SetterStmt::new(getter.owner, getter.field, op, value)),
+            Expr::Getter(getter) => Stmt::Setter(SetterStmt::new(getter.owner, getter.member, op, value)),
             _ => unreachable!()
         };
         self.consume_or_err(&TokenKind::Semi)?;
