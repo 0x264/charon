@@ -1,7 +1,7 @@
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use crate::ast::{AssignOp, BinaryOp, ClassDecl, Expr, FuncDecl, LogicOp, Program, Stmt, UnaryOp};
-use crate::constant::*;
-use crate::opcode::*;
+use common::constant::*;
+use common::opcode::*;
 
 struct ConstantPool {
     long: HashMap<i64, u16>,

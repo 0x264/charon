@@ -1,6 +1,6 @@
 use std::mem;
 use crate::ast::*;
-use crate::constant::ENTRY_NAME;
+use common::constant::ENTRY_NAME;
 use crate::token::{Token, TokenKind};
 use crate::err::{Result, Error};
 

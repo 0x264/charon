@@ -58,6 +58,16 @@ impl LEReader<'_> {
             Ok(res)
         }
     }
+    
+    pub fn read_to(&mut self, to: &mut Vec<u8>, len: usize) -> Result<()> {
+        if self.offset + len > self.data.len() {
+            Err(err_msg())
+        } else {
+            to.extend_from_slice(&self.data[self.offset .. self.offset + len]);
+            self.offset += len;
+            Ok(())
+        }
+    }
 }
 
 fn err_msg() -> String {
