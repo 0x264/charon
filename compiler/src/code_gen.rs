@@ -390,23 +390,20 @@ fn gen_expr(expr: &Expr, context: &mut Context, cp: &mut ConstantPool, code: &mu
                 4  => OP_LCONST_4,
                 5  => OP_LCONST_5,
                 _  => {
-                    let idx = cp.const_long(*v);
                     code.push(OP_LDC);
-                    code.extend_from_slice(&idx.to_le_bytes());
+                    code.extend_from_slice(&cp.const_long(*v).to_le_bytes());
                     return Ok(());
                 }
             };
             code.push(opcode);
         }
         Expr::Double(v) => {
-            let idx = cp.const_double(*v);
             code.push(OP_LDC);
-            code.extend_from_slice(&idx.to_le_bytes());
+            code.extend_from_slice(&cp.const_double(*v).to_le_bytes());
         }
         Expr::String(s) => {
-            let idx = cp.const_string(s);
             code.push(OP_LDC);
-            code.extend_from_slice(&idx.to_le_bytes());
+            code.extend_from_slice(&cp.const_string(s).to_le_bytes());
         }
         Expr::Binary(binary) => {
             gen_expr(&binary.left, context, cp, code)?;
@@ -486,9 +483,8 @@ fn gen_expr(expr: &Expr, context: &mut Context, cp: &mut ConstantPool, code: &mu
         }
         Expr::Getter(getter) => {
             gen_expr(&getter.owner, context, cp, code)?;
-            let idx = cp.const_string(&getter.member);
             code.push(OP_GET_MEMBER);
-            code.extend_from_slice(&idx.to_le_bytes());
+            code.extend_from_slice(&cp.const_string(&getter.member).to_le_bytes());
         }
     }
     Ok(())
