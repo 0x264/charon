@@ -68,6 +68,11 @@ impl LEReader<'_> {
             Ok(())
         }
     }
+    
+    #[inline]
+    pub fn offset(&self) -> usize {
+        self.offset
+    }
 }
 
 fn err_msg() -> String {
