@@ -50,6 +50,7 @@ impl ConstantPool {
         }
 
         self.code.push(CONSTANT_STRING);
+        self.code.extend_from_slice(&(v.len() as u16).to_le_bytes());
         self.code.extend_from_slice(v.as_bytes());
 
         let idx = self.count;
