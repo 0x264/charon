@@ -188,8 +188,10 @@ fn gen_func(func: &FuncDecl, context: &mut Context, cp: &mut ConstantPool, code:
     }
 
     // default return null
-    body.push(OP_CONST_NULL);
-    body.push(OP_RETURN);
+    if body.is_empty() || unsafe { *body.get_unchecked(body.len() - 1) != OP_RETURN } {
+        body.push(OP_CONST_NULL);
+        body.push(OP_RETURN);
+    }
 
     code.extend_from_slice(&(body.len() as u16).to_le_bytes());
     code.extend_from_slice(&body);
