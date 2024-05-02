@@ -68,7 +68,7 @@ enum CallableType {
 }
 
 struct Context {
-    local_var: HashMap<String, u8>,
+    local_vars: Vec<HashMap<String, u8>>,
     count: u8,
 
     callable_type: CallableType,
@@ -80,7 +80,7 @@ struct Context {
 impl Context {
     fn new(callable_type: CallableType) -> Self {
         Self {
-            local_var: HashMap::new(),
+            local_vars: vec![HashMap::new()],
             count: 0,
             callable_type,
             loop_start_pos: None,
@@ -88,20 +88,37 @@ impl Context {
         }
     }
 
+    fn push_scope(&mut self) {
+        self.local_vars.push(HashMap::new());
+    }
+    
+    fn pop_scope(&mut self) {
+        self.local_vars.pop();
+    }
+    
     // we allow redefine variable
-    fn define_var(&mut self, var: &str) -> u8 {
-        if let Some(idx) = self.local_var.get(var) {
+    fn define_local_var(&mut self, var: &str) -> u8 {
+        if let Some(idx) = self.local_vars.last().unwrap().get(var) {
             return *idx;
         }
 
         let idx = self.count;
         self.count += 1;
-        self.local_var.insert(var.to_owned(), idx);
+        self.local_vars.last_mut().unwrap().insert(var.to_owned(), idx);
         idx
     }
 
-    fn get_var(&mut self, var: &str) -> Option<u8> {
-        self.local_var.get(var).copied()
+    fn get_local_var(&mut self, var: &str) -> Option<u8> {
+        for scope in self.local_vars.iter().rev() {
+            if let Some(idx) = scope.get(var) {
+                return Some(*idx);
+            }
+        }
+        None
+    }
+    
+    fn is_global_scope(&self) -> bool {
+        self.callable_type == CallableType::None
     }
 }
 
@@ -174,12 +191,12 @@ fn gen_func(func: &FuncDecl, context: &mut Context, cp: &mut ConstantPool, code:
     code.push(func.params.len() as u8);
 
     for arg in &func.params {
-        context.define_var(arg);
+        context.define_local_var(arg);
     }
 
     // define 'this' as the last arg
     if let CallableType::Method(_) = context.callable_type {
-        context.define_var("this");
+        context.define_local_var("this");
     }
 
     let mut body = Vec::new();
@@ -206,8 +223,14 @@ fn gen_stmt(stmt: &Stmt, context: &mut Context, cp: &mut ConstantPool, code: &mu
             } else {
                 code.push(OP_CONST_NULL);
             }
-            code.push(OP_SET_LOCAL);
-            code.push(context.define_var(&vardef.name));
+            
+            if context.is_global_scope() {
+                code.push(OP_SET_GLOBAL);
+                code.extend_from_slice(&cp.const_string(&vardef.name).to_le_bytes());
+            } else {
+                code.push(OP_SET_LOCAL);
+                code.push(context.define_local_var(&vardef.name));
+            }
         }
         Stmt::Expr(e) => {
             match e.as_ref() {
@@ -225,7 +248,7 @@ fn gen_stmt(stmt: &Stmt, context: &mut Context, cp: &mut ConstantPool, code: &mu
         Stmt::SetVar(setvar) => {
             let opcode;
             let idx: u16;
-            if let Some(local) = context.get_var(&setvar.to) {
+            if !context.is_global_scope() && let Some(local) = context.get_local_var(&setvar.to) {
                 opcode = OP_SET_LOCAL;
                 idx = local as u16;
             } else {
@@ -291,9 +314,11 @@ fn gen_stmt(stmt: &Stmt, context: &mut Context, cp: &mut ConstantPool, code: &mu
             let off = code.len() as u16;
             code.push(0);code.push(0);
 
+            context.push_scope();
             for stmt in &ifstmt.then {
                 gen_stmt(stmt, context, cp, code)?;
             }
+            context.pop_scope();
 
             let target;
             if ifstmt.els.is_empty() {
@@ -304,9 +329,11 @@ fn gen_stmt(stmt: &Stmt, context: &mut Context, cp: &mut ConstantPool, code: &mu
                 code.push(0);code.push(0);
 
                 target = code.len() as u16;
+                context.push_scope();
                 for stmt in &ifstmt.els {
                     gen_stmt(stmt, context, cp, code)?;
                 }
+                context.pop_scope();
                 patch(code, off2, code.len() as u16);
             }
             patch(code, off, target);
@@ -319,9 +346,11 @@ fn gen_stmt(stmt: &Stmt, context: &mut Context, cp: &mut ConstantPool, code: &mu
             code.push(0);code.push(0);
 
             context.loop_start_pos = Some(loop_back);
+            context.push_scope();
             for stmt in &while_stmt.body {
                 gen_stmt(stmt, context, cp, code)?;
             }
+            context.pop_scope();
             context.loop_start_pos = None;
 
             // jump back
@@ -362,9 +391,11 @@ fn gen_stmt(stmt: &Stmt, context: &mut Context, cp: &mut ConstantPool, code: &mu
             code.push(OP_RETURN);
         }
         Stmt::Block(block) => {
+            context.push_scope();
             for stmt in block {
                 gen_stmt(stmt, context, cp, code)?;
             }
+            context.pop_scope();
         }
     }
 
@@ -476,9 +507,9 @@ fn gen_expr(expr: &Expr, context: &mut Context, cp: &mut ConstantPool, code: &mu
             code.push(call.args.len() as u8);
         }
         Expr::GetVar(getvar) => {
-            if let Some(idx) = context.local_var.get(getvar) {
+            if !context.is_global_scope() && let Some(idx) = context.get_local_var(getvar) {
                 code.push(OP_GET_LOCAL);
-                code.push(*idx);
+                code.push(idx);
             } else {
                 code.push(OP_GET_GLOBAL);
                 code.extend_from_slice(&cp.const_string(getvar).to_le_bytes());
