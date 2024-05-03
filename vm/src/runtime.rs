@@ -131,7 +131,7 @@ pub fn exec(program: Program) -> Result<()> {
                     }
                 }
             }
-            Err(e) => print_error_and_exit(&e)
+            Err(e) => print_error_and_exit(&e, &frames)
         }
     }
 
@@ -512,8 +512,21 @@ fn is_false(v: &Value) -> bool {
     }
 }
 
-fn print_error_and_exit(msg: &str) -> ! {
-    eprintln!("{msg}");
-    // todo print stack trace
+fn print_error_and_exit(msg: &str, frames: &[Frame]) -> ! {
+    eprintln!("Error:  {msg}");
+    for frame in frames.iter().rev() {
+        match &frame.frame_type {
+            FrameType::Func(f) => {
+                let name = unsafe {&(**f).name};
+                if name != ENTRY_NAME {
+                    eprintln!("      in function: {name}");
+                }
+            }
+            FrameType::Method(m) => {
+                let method = unsafe {&**m};
+                eprintln!("      in method:  {}.{}", method.class_name, method.name);
+            }
+        }
+    }
     exit(1);
 }
