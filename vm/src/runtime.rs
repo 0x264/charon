@@ -120,16 +120,18 @@ pub fn exec(program: Program) -> Result<()> {
             break;
         };
 
-        let res = run_code(frame, &stack, &mut globals, &program)?;
-        match res {
-            Some(new_frame) => frames.push(new_frame),
-            None => {
-                let return_value = pop_stack(frame, &stack);
-                frames.pop();
-                if let Some(frame) = frames.last() {
-                    push_stack(frame, &stack, return_value);
+        match run_code(frame, &stack, &mut globals, &program) {
+            Ok(res) => match res {
+                Some(new_frame) => frames.push(new_frame),
+                None => {
+                    let return_value = pop_stack(frame, &stack);
+                    frames.pop();
+                    if let Some(frame) = frames.last() {
+                        push_stack(frame, &stack, return_value);
+                    }
                 }
             }
+            Err(e) => print_error_and_exit(&e)
         }
     }
 
@@ -328,7 +330,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                         let new_frame = Frame::new(FrameType::Func(func));
                         let func = unsafe {&(*func)};
                         if func.params != params {
-                            print_error_and_exit(&format!("function: {}'s param count: {}, but got: {params}", func.name, func.params));
+                            return Err(format!("function: {}'s param count: {}, but got: {params}", func.name, func.params));
                         }
                         let sp = frame.sp.get();
                         new_frame.sp.set(sp);
@@ -356,7 +358,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                     }
                     Value::ForeignFunction(ff) => {
                         if ff.params != params {
-                            print_error_and_exit(&format!("foreign function: {}'s param count: {}, but got: {params}", ff.name, ff.params));
+                            return Err(format!("foreign function: {}'s param count: {}, but got: {params}", ff.name, ff.params));
                         }
                         let mut args = VecDeque::with_capacity(params as usize);
                         for _ in 0 .. params {
@@ -367,7 +369,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                         let res = ff.entry.invoke(args);
                         push_stack(frame, stack, res);
                     }
-                    _ => panic!("todo")
+                    _ => return Err("only class、function、method and foreign function can be invoked".to_owned())
                 }
             }
 
@@ -390,7 +392,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                     return Err("`GET_GLOBAL` expect string argument as global variable name".to_owned());
                 };
                 let Some(v) = globals.get(var) else {
-                    print_error_and_exit(&format!("global variable: {var} used before define"));
+                    return Err(format!("global variable: {var} used before define"));
                 };
                 push_stack(frame, stack, v.clone());
             }
@@ -441,7 +443,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                     _ => return Err("`GET_MEMBER` owner should be class's instance".to_owned())
                 }
             }
-            _ => panic!()
+            _ => return Err(format!("unknown opcode: {opcode}"))
         }
     }
 
