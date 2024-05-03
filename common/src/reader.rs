@@ -1,9 +1,9 @@
+use crate::Result;
+
 pub struct LEReader<'a> {
     data: &'a [u8],
     offset: usize
 }
-
-pub type Result<T> = std::result::Result<T, String>;
 
 impl LEReader<'_> {
     pub fn new(data: &[u8]) -> LEReader {
@@ -72,6 +72,16 @@ impl LEReader<'_> {
     #[inline]
     pub fn offset(&self) -> usize {
         self.offset
+    }
+    
+    #[inline]
+    pub fn set_offset(&mut self, offset: usize) -> Result<()> {
+        if offset < self.data.len() {
+            self.offset = offset;
+            Ok(())
+        } else {
+            Err("offset out of range".to_owned())
+        }
     }
 }
 

@@ -2,8 +2,7 @@ use common::constant::ConstantItem;
 use common::program::{Class, Program};
 use common::opcode::*;
 use common::reader::LEReader;
-
-pub type Result<T> = std::result::Result<T, String>;
+use common::Result;
 
 pub fn disassemble(program: &Program) -> Result<()> {
     println!("version: {}.{}\n", program.major, program.minor);

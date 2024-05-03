@@ -2,6 +2,7 @@ use ahash::{HashMap, HashMapExt};
 use crate::constant::*;
 use crate::program::{Class, Function, Method, Program};
 use crate::reader::LEReader;
+use crate::Result;
 
 pub struct Loader<'a> {
     reader: LEReader<'a>,
@@ -9,8 +10,6 @@ pub struct Loader<'a> {
     classes: HashMap<String, Class>,
     functions: HashMap<String, Function>
 }
-
-pub type Result<T> = std::result::Result<T, String>;
 
 impl Loader<'_> {
     pub fn new(bytes: &[u8]) -> Loader {
