@@ -16,7 +16,7 @@ pub enum Value {
     Class(*const Class),
     Instance(Rc<RefCell<Instance>>),
     Function(*const Function),
-    Method(*const Method),
+    Method(MemMethod),
     ForeignFunction(ForeignFunction)
 }
 
@@ -82,5 +82,36 @@ impl PartialEq for ForeignFunction {
             return false;
         }
         std::ptr::addr_eq(Rc::as_ptr(&self.entry), Rc::as_ptr(&other.entry))
+    }
+}
+
+#[derive(Clone)]
+pub struct MemMethod {
+    pub instance: Rc<RefCell<Instance>>,
+    pub method: *const Method
+}
+
+impl MemMethod {
+    pub fn new(instance: Rc<RefCell<Instance>>, method: *const Method) -> Self {
+        Self { instance, method }
+    }
+    
+    pub fn param_count(&self) -> u8 {
+        unsafe {(*self.method).params}
+    }
+    
+    pub fn name(&self) -> &str {
+        unsafe {&(*self.method).name}
+    }
+
+    pub fn class_name(&self) -> &str {
+        unsafe {&(*self.method).class_name}
+    }
+}
+
+impl PartialEq for MemMethod {
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::addr_eq(self.method, other.method)
+            && std::ptr::addr_eq(Rc::as_ptr(&self.instance), Rc::as_ptr(&other.instance))
     }
 }

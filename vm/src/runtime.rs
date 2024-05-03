@@ -11,7 +11,7 @@ use common::Result;
 use common::opcode::*;
 use crate::ffi::StdPrint;
 use crate::stack::Stack;
-use crate::value::{ForeignFunction, Instance, Value};
+use crate::value::{ForeignFunction, Instance, MemMethod, Value};
 
 enum FrameType {
     Func(*const Function),
@@ -233,7 +233,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                             Value::String(l)
                         }
                         Value::Method(m) => {
-                            l.push_str(&format!("<class: {}'s method: {}>", unsafe {&(*m).class_name}, unsafe {&(*m).name}));
+                            l.push_str(&format!("<class: {}'s method: {}>", m.class_name(), m.name()));
                             Value::String(l)
                         }
                         Value::ForeignFunction(ff) => {
@@ -340,7 +340,19 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                         return Ok(Some(new_frame));
                     }
                     Value::Method(method) => {
-                        todo!()
+                        let new_frame = Frame::new(FrameType::Method(method.method));
+                        if method.param_count() != params {
+                            return Err(format!("method: {}'s param count: {}, but got: {params}", method.name(), method.param_count()));
+                        }
+                        let sp = frame.sp.get();
+                        stack.write(sp as isize, Value::Instance(method.instance.clone()));// this
+                        new_frame.sp.set(sp + 1);
+                        new_frame.sb.set(sp - params as usize);
+
+                        frame.pc.set(reader.offset());
+                        frame.sp.set(sp - params as usize - 1);// -1 the method owner
+
+                        return Ok(Some(new_frame));
                     }
                     Value::ForeignFunction(ff) => {
                         if ff.params != params {
@@ -418,7 +430,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                     Value::Instance(instance) => {
                         let class = unsafe {&(*instance.borrow().class)};
                         let v = if let Some(method) = class.methods.get(name) {
-                            Value::Method(method as *const Method)
+                            Value::Method(MemMethod::new(instance.clone(), method as *const Method))
                         } else if let Some(v) = instance.borrow().fields.get(name) {
                             v.clone()
                         } else {

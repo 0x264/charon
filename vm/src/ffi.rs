@@ -21,7 +21,7 @@ impl Ffi for StdPrint {
                 Value::Class(c) => print!("<class: {}>", unsafe { &(**c).name }),
                 Value::Instance(i) => print!("<class: {}'s instance>", unsafe {&(*i.borrow().class).name}),
                 Value::Function(f) => print!("<function: {}>", unsafe {&(**f).name}),
-                Value::Method(m) => print!("<class: {}'s method: {}>", unsafe {&(**m).class_name}, unsafe {&(**m).name}),
+                Value::Method(m) => print!("<class: {}'s method: {}>", m.class_name(), m.name()),
                 Value::ForeignFunction(ff) => print!("<foreign function: {}>", ff.name)
             }
         }
