@@ -426,6 +426,10 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let owner = pop_stack(frame, stack);
                 match owner {
                     Value::Instance(instance) => {
+                        if unsafe {(*instance.borrow().class).methods.contains_key(var)} {
+                            return Err(format!("class: {} already has method named: {var}, can't assign new value to it"
+                                               , unsafe {&(*instance.borrow().class).name}));
+                        }
                         instance.borrow_mut().fields.insert(var.to_owned(), v);
                     }
                     _ => return Err("`SET_FIELD` owner should be class's instance".to_owned())
