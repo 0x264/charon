@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use ahash::HashMap;
 use common::program::{Class, Function, Method};
+use crate::ffi::Ffi;
 
 #[derive(PartialEq, Clone)]
 pub enum Value {
@@ -15,7 +16,8 @@ pub enum Value {
     Class(*const Class),
     Instance(Rc<RefCell<Instance>>),
     Function(*const Function),
-    Method(*const Method)
+    Method(*const Method),
+    ForeignFunction(ForeignFunction)
 }
 
 impl Value {
@@ -55,4 +57,21 @@ impl Value {
 pub struct Instance {
     pub class: *const Class,
     pub fields: HashMap<String, Value>
+}
+
+#[derive(Clone)]
+pub struct ForeignFunction {
+    pub name: String,
+    pub params: u8,
+    pub entry: Rc<dyn Ffi>
+}
+
+impl PartialEq for ForeignFunction {
+    fn eq(&self, other: &Self) -> bool {
+        if self.params != other.params
+            || self.name != other.name {
+            return false;
+        }
+        std::ptr::addr_eq(Rc::as_ptr(&self.entry), Rc::as_ptr(&other.entry))
+    }
 }

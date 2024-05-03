@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::collections::VecDeque;
 use std::mem;
 use std::process::exit;
 use std::rc::Rc;
@@ -8,8 +9,9 @@ use common::program::{Class, Function, Method, Program};
 use common::reader::LEReader;
 use common::Result;
 use common::opcode::*;
+use crate::ffi::StdPrint;
 use crate::stack::Stack;
-use crate::value::Value;
+use crate::value::{ForeignFunction, Value};
 
 enum FrameType {
     Func(*const Function),
@@ -98,6 +100,16 @@ pub fn exec(program: Program) -> Result<()> {
     }
     for func in program.functions.values() {
         globals.insert(func.name.clone(), Value::Function(func as *const Function));
+    }
+    
+    // std function
+    {
+        let ff = ForeignFunction {
+            name: "__print".to_owned(),
+            params: 1,
+            entry: Rc::new(StdPrint)
+        };
+        globals.insert(ff.name.clone(), Value::ForeignFunction(ff));
     }
 
     // create first frame
@@ -224,6 +236,10 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                             l.push_str(&format!("<class: {}'s method: {}>", unsafe {&(*m).class_name}, unsafe {&(*m).name}));
                             Value::String(l)
                         }
+                        Value::ForeignFunction(ff) => {
+                            l.push_str(&format!("<foreign function: {}>", ff.name));
+                            Value::String(l)
+                        }
                     }
                     _ => return Err("`+` can only used between long, double and string".to_owned())
                 };
@@ -320,6 +336,19 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                     }
                     Value::Method(method) => {
                         todo!()
+                    }
+                    Value::ForeignFunction(ff) => {
+                        if ff.params != params {
+                            print_error_and_exit(&format!("foreign function: {}'s param count: {}, but got: {params}", ff.name, ff.params));
+                        }
+                        let mut args = VecDeque::with_capacity(params as usize);
+                        for _ in 0 .. params {
+                            args.push_front(pop_stack(frame, stack));
+                        }
+                        let sp = frame.sp.get();
+                        frame.sp.set(sp - 1);// -1 the foreign function owner
+                        let res = ff.entry.invoke(args);
+                        push_stack(frame, stack, res);
                     }
                     _ => panic!("todo")
                 }
@@ -428,7 +457,8 @@ fn is_true(v: &Value) -> bool {
         Value::Class(_) => true,
         Value::Instance(_) => true,
         Value::Function(_) => true,
-        Value::Method(_) => true
+        Value::Method(_) => true,
+        Value::ForeignFunction(_) => true
     }
 }
 
@@ -444,7 +474,8 @@ fn is_false(v: &Value) -> bool {
         Value::Class(_) => false,
         Value::Instance(_) => false,
         Value::Function(_) => false,
-        Value::Method(_) => false
+        Value::Method(_) => false,
+        Value::ForeignFunction(_) => false
     }
 }
 

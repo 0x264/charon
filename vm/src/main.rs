@@ -7,6 +7,7 @@ use crate::runtime::exec;
 mod value;
 mod stack;
 mod runtime;
+mod ffi;
 
 fn main() {
     let args: Vec<_> = env::args().collect();
