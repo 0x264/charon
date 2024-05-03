@@ -199,7 +199,7 @@ impl Lexer<'_> {
         let mut s = String::new();
         s.push(first);
 
-        while let Some(c) = self.peek() && c.is_ascii_alphanumeric() {
+        while let Some(c) = self.peek() && (c.is_ascii_alphanumeric() || c == b'_') {
             self.advance();
             s.push(c as char);
         }
