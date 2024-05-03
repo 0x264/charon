@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use ahash::HashMap;
+use ahash::{HashMap, HashMapExt};
 use common::program::{Class, Function, Method};
 use crate::ffi::Ffi;
 
@@ -57,6 +57,15 @@ impl Value {
 pub struct Instance {
     pub class: *const Class,
     pub fields: HashMap<String, Value>
+}
+
+impl Instance {
+    pub fn new(class: *const Class) -> Self {
+        Self {
+            class,
+            fields: HashMap::new()
+        }
+    }
 }
 
 #[derive(Clone)]

@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::mem;
 use std::process::exit;
@@ -11,7 +11,7 @@ use common::Result;
 use common::opcode::*;
 use crate::ffi::StdPrint;
 use crate::stack::Stack;
-use crate::value::{ForeignFunction, Value};
+use crate::value::{ForeignFunction, Instance, Value};
 
 enum FrameType {
     Func(*const Function),
@@ -316,8 +316,13 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let params = reader.next_u8()?;
                 let owner = stack.read(frame.sp.get() as isize - params as isize - 1);
                 match owner {
-                    Value::Class(name) => {
-                        todo!()
+                    Value::Class(class) => {
+                        // we don't have custom constructor now, so param count should be 0
+                        if params != 0 {
+                            return Err(format!("don't support pass arguments to class's constructor: {}", unsafe {&*class}.name));
+                        }
+                        pop_stack(frame, stack);// owner
+                        push_stack(frame, stack, Value::Instance(Rc::new(RefCell::new(Instance::new(class)))));
                     }
                     Value::Function(func) => {
                         let new_frame = Frame::new(FrameType::Func(func));
