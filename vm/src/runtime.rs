@@ -384,7 +384,11 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let Some(ConstantItem::String(var)) = program.constant_pool.get(idx as usize) else {
                     return Err("`SET_GLOBAL` expect string argument as global variable name".to_owned());
                 };
-                globals.insert(var.to_owned(), pop_stack(frame, stack));
+                let v = pop_stack(frame, stack);
+                if matches!(v, Value::Method(_)) {
+                    return Err("method can't assign to variable".to_owned());
+                }
+                globals.insert(var.to_owned(), v);
             }
             OP_GET_GLOBAL => {
                 let idx = reader.next_u16()?;
@@ -399,6 +403,9 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
             OP_SET_LOCAL => {
                 let idx = reader.next_u8()?;
                 let v = pop_stack(frame, stack);
+                if matches!(v, Value::Method(_)) {
+                    return Err("method can't assign to variable".to_owned());
+                }
                 stack.write(frame.sb.get() as isize + idx as isize, v);
             }
             OP_GET_LOCAL => {
@@ -413,6 +420,9 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                     return Err("`SET_FIELD` expect string argument as field name".to_owned());
                 };
                 let v = pop_stack(frame, stack);
+                if matches!(v, Value::Method(_)) {
+                    return Err("method can't assign to class's field".to_owned());
+                }
                 let owner = pop_stack(frame, stack);
                 match owner {
                     Value::Instance(instance) => {
