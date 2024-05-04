@@ -86,7 +86,13 @@ unsafe fn errno_msg() -> String {
         .unwrap_or("unknown error".to_owned())
 }
 
-static mut OLD_SIGACTION: sigaction = sigaction {
+static mut OLD_SIGSEGV_SIGACTION: sigaction = sigaction {
+    sa_sigaction: 0,
+    sa_mask: 0,
+    sa_flags: 0
+};
+
+static mut OLD_SIGBUS_SIGACTION: sigaction = sigaction {
     sa_sigaction: 0,
     sa_mask: 0,
     sa_flags: 0
@@ -95,10 +101,18 @@ static mut OLD_SIGACTION: sigaction = sigaction {
 unsafe extern "C" fn sig_handler(signum: c_int, siginfo: *const siginfo_t, context: *const c_void) {
     handle_out_of_stack(siginfo);
 
-    if OLD_SIGACTION.sa_sigaction != 0 {
+    let action = if signum == libc::SIGSEGV {
+        OLD_SIGSEGV_SIGACTION
+    } else if signum == libc::SIGBUS {
+        OLD_SIGBUS_SIGACTION
+    } else {
+        unreachable!()
+    };
+    
+    if action.sa_sigaction != 0 {
         let mut pre_mask: sigset_t = 0;
-        libc::sigprocmask(libc::SIG_BLOCK, addr_of!(OLD_SIGACTION.sa_mask), addr_of_mut!(pre_mask));
-        let handler: extern "C" fn(c_int, *const siginfo_t, *const c_void) = mem::transmute(addr_of!(OLD_SIGACTION.sa_sigaction));
+        libc::sigprocmask(libc::SIG_BLOCK, addr_of!(action.sa_mask), addr_of_mut!(pre_mask));
+        let handler: extern "C" fn(c_int, *const siginfo_t, *const c_void) = mem::transmute(addr_of!(action.sa_sigaction));
         handler(signum, siginfo, context);
         libc::sigprocmask(libc::SIG_SETMASK, addr_of!(pre_mask), ptr::null_mut());
     } else {
@@ -128,10 +142,11 @@ unsafe fn handle_out_of_stack(siginfo: *const siginfo_t) {
     }
 }
 
-static mut HAS_INSTALLED_HANDLER: bool = false;
+static mut HAS_INSTALLED_SIGSEGV_HANDLER: bool = false;
+static mut HAS_INSTALLED_SIGBUS_HANDLER: bool = false;
 
 unsafe fn install_sigaction_for_segv() -> Result<(), String> {
-    if HAS_INSTALLED_HANDLER {
+    if HAS_INSTALLED_SIGSEGV_HANDLER && HAS_INSTALLED_SIGBUS_HANDLER {
         return Ok(());
     }
     let mut action = sigaction {
@@ -141,10 +156,20 @@ unsafe fn install_sigaction_for_segv() -> Result<(), String> {
     };
     
     libc::sigemptyset(addr_of_mut!(action.sa_mask));// ignore error
-    if libc::sigaction(libc::SIGSEGV, addr_of!(action), addr_of_mut!(OLD_SIGACTION)) == -1 {
-        Err(errno_msg())
-    } else {
-        HAS_INSTALLED_HANDLER = true;
-        Ok(())
+    
+    if !HAS_INSTALLED_SIGSEGV_HANDLER {
+        if libc::sigaction(libc::SIGSEGV, addr_of!(action), addr_of_mut!(OLD_SIGSEGV_SIGACTION)) == -1 {
+            return Err(errno_msg());
+        }
+        HAS_INSTALLED_SIGSEGV_HANDLER = true;
     }
+    
+    if !HAS_INSTALLED_SIGBUS_HANDLER {
+        if libc::sigaction(libc::SIGBUS, addr_of!(action), addr_of_mut!(OLD_SIGBUS_SIGACTION)) == -1 {
+            return Err(errno_msg());
+        }
+        HAS_INSTALLED_SIGBUS_HANDLER = true;
+    }
+        
+    Ok(())
 }
