@@ -1,0 +1,8 @@
+var a = 0;
+
+while (a < 100) {
+    __print(a);
+    __print("\n");
+
+    a += 1;
+}

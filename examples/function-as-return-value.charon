@@ -1,0 +1,10 @@
+func add(x, y) {
+    return x + y;
+}
+
+func getOperator() {
+    return add;
+}
+
+var a = getOperator()(1, 2);
+__print(a);

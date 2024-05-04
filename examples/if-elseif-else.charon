@@ -1,0 +1,19 @@
+var a = 0;
+
+if (!a) {
+    __print("the value of a convert to false\n");
+}
+
+a = 2;
+
+if (a) {
+    __print("the value of a convert to true\n");
+}
+
+if (a > 10) {
+    __print("a = " + a + " bigger then 10\n");
+} else if(a > 3) {
+    __print("a = " + a + " bigger then 3\n");
+} else {
+    __print("a = " + a + "\n");
+}

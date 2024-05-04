@@ -1,0 +1,11 @@
+var a = 0;
+
+while (true) {
+    if (a > 100) {
+        break;
+    }
+    a += 7;
+}
+
+__print("a = " + a + " after loop\n");
+
