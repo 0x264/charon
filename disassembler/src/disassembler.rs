@@ -15,7 +15,7 @@ pub fn disassemble(program: &Program) -> Result<()> {
 
     println!("function count: {}\n", program.functions.len());
     for func in program.functions.values() {
-        println!("function name: {}, param count: {}", func.name, func.params);
+        println!("function name: {}, param count: {}, max locals: {}", func.name, func.params, func.max_locals);
         disassemble_code(&func.code, &program.constant_pool, false)?;
         println!();
     }
@@ -26,7 +26,7 @@ fn disassemble_class(class: &Class, cp: &[ConstantItem]) -> Result<()> {
     println!("class name: {}, method count: {}", class.name, class.methods.len());
 
     for method in class.methods.values() {
-        println!("    method name: {}, param count: {}", method.name, method.params);
+        println!("    method name: {}, param count: {}, max locals: {}", method.name, method.params, method.max_locals);
         disassemble_code(&method.code, cp, true)?;
         println!();
     }

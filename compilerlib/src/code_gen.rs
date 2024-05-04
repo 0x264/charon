@@ -210,6 +210,9 @@ fn gen_func(func: &FuncDecl, context: &mut Context, cp: &mut ConstantPool, code:
         body.push(OP_RETURN);
     }
 
+    // max locals
+    code.push(context.count);
+    
     code.extend_from_slice(&(body.len() as u16).to_le_bytes());
     code.extend_from_slice(&body);
     Ok(())

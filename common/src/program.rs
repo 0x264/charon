@@ -16,24 +16,26 @@ pub struct Method {
     pub class_name: String,
     pub name: String,
     pub params: u8, // not include 'this'
+    pub max_locals: u8,
     pub code: Vec<u8>
 }
 
 impl Method {
-    pub fn new(class_name: String, name: String, params: u8, code: Vec<u8>) -> Self {
-        Self { class_name, name, params, code }
+    pub fn new(class_name: String, name: String, params: u8, max_locals: u8, code: Vec<u8>) -> Self {
+        Self { class_name, name, params, max_locals, code }
     }
 }
 
 pub struct Function {
     pub name: String,
     pub params: u8,
+    pub max_locals: u8,
     pub code: Vec<u8>
 }
 
 impl Function {
-    pub fn new(name: String, params: u8, code: Vec<u8>) -> Self {
-        Self { name, params, code }
+    pub fn new(name: String, params: u8, max_locals: u8, code: Vec<u8>) -> Self {
+        Self { name, params, max_locals, code }
     }
 }
 

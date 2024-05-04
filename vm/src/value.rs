@@ -94,6 +94,10 @@ impl MemMethod {
         unsafe {(*self.method).params}
     }
     
+    pub fn max_locals(&self) -> u8 {
+        unsafe {(*self.method).max_locals}
+    }
+    
     pub fn name(&self) -> &str {
         unsafe {&(*self.method).name}
     }

@@ -90,8 +90,8 @@ impl Loader<'_> {
     }
 
     fn load_method(&mut self, class_name: &str) -> Result<Method> {
-        let Function {name, params, code} = self.load_function()?;
-        Ok(Method::new(class_name.to_owned(), name, params, code))
+        let Function {name, params, max_locals, code} = self.load_function()?;
+        Ok(Method::new(class_name.to_owned(), name, params, max_locals, code))
     }
     
     fn load_functions(&mut self) -> Result<()> {
@@ -108,10 +108,11 @@ impl Loader<'_> {
         let name_idx = self.reader.next_u16()?;
         let name = self.load_string_constant(name_idx)?;
         let params = self.reader.next_u8()?;
+        let max_locals = self.reader.next_u8()?;
         let code_len = self.reader.next_u16()? as usize;
         let mut code = Vec::with_capacity(code_len);
         self.reader.read_to(&mut code, code_len)?;
-        Ok(Function::new(name, params, code))
+        Ok(Function::new(name, params, max_locals, code))
     }
     
     fn load_string_constant(&mut self, idx: u16) -> Result<String> {

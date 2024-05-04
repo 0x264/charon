@@ -340,8 +340,8 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                             return Err(format!("function: {}'s param count: {}, but got: {params}", func.name, func.params));
                         }
                         let sp = frame.sp.get();
-                        new_frame.sp.set(sp);
                         new_frame.sb.set(sp - params as usize);
+                        new_frame.sp.set(new_frame.sb.get() + func.max_locals as usize);
 
                         frame.pc.set(reader.offset());
                         frame.sp.set(sp - params as usize - 1);// -1 the function owner
@@ -355,8 +355,8 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                         }
                         let sp = frame.sp.get();
                         stack.write(sp as isize, Value::Instance(method.instance.clone()));// this
-                        new_frame.sp.set(sp + 1);
                         new_frame.sb.set(sp - params as usize);
+                        new_frame.sp.set(new_frame.sb.get() + method.max_locals() as usize);
 
                         frame.pc.set(reader.offset());
                         frame.sp.set(sp - params as usize - 1);// -1 the method owner
@@ -369,7 +369,8 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                         }
                         let mut args = VecDeque::with_capacity(params as usize);
                         for _ in 0 .. params {
-                            args.push_front(pop_stack(frame, stack));
+                            let arg = pop_stack(frame, stack);
+                            args.push_front(arg);
                         }
                         let sp = frame.sp.get();
                         frame.sp.set(sp - 1);// -1 the foreign function owner
