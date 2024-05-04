@@ -1,21 +1,11 @@
-#![feature(let_chains)]
-
-
 use std::{env, fs};
 use std::env::current_dir;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::exit;
-use crate::code_gen::check_and_gen;
-use crate::lexer::Lexer;
-use crate::parser::Parser;
-
-mod token;
-mod lexer;
-mod parser;
-mod ast;
-mod err;
-mod code_gen;
+use compilerlib::code_gen::check_and_gen;
+use compilerlib::lexer::Lexer;
+use compilerlib::parser::Parser;
 
 fn main() {
     let args: Vec<_> = env::args().collect();

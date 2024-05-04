@@ -1,9 +1,8 @@
 [package]
-name = "charonc"
+name = "compilerlib"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-compilerlib = {path = "../compilerlib"}
 common = {path = "../common"}
 ahash = "0.8.11"

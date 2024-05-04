@@ -27,6 +27,7 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "common",
+ "compilerlib",
  "libc",
 ]
 
@@ -36,6 +37,7 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "common",
+ "compilerlib",
 ]
 
 [[package]]
@@ -50,6 +52,14 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "ahash",
+]
+
+[[package]]
+name = "compilerlib"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "common",
 ]
 
 [[package]]
