@@ -21,12 +21,6 @@ pub enum Value {
 }
 
 impl Value {
-    pub unsafe fn as_bool_unchecked(&self) -> bool {
-        match self {
-            Value::Bool(v) => *v,
-            _ => unreachable!()
-        }
-    }
     pub unsafe fn as_long_unchecked(&self) -> i64 {
         match self { 
             Value::Long(v) => *v,

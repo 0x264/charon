@@ -396,9 +396,9 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let Some(ConstantItem::String(var)) = program.constant_pool.get(idx as usize) else {
                     return Err("`SET_GLOBAL` expect string argument as global variable name".to_owned());
                 };
-                let Some(v) = globals.get(var) else {
+                if globals.contains_key(var) {
                     return Err(format!("global variable: {var} used before define"));
-                };
+                }
                 let v = pop_stack(frame, stack);
                 if matches!(v, Value::Method(_)) {
                     return Err("method can't assign to variable".to_owned());

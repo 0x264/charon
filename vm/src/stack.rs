@@ -2,6 +2,7 @@ use std::ffi::{c_void, CString};
 use std::marker::PhantomData;
 use std::{mem, ptr};
 use std::process::exit;
+use std::ptr::{addr_of, addr_of_mut};
 use libc::{c_int, SA_SIGINFO, sigaction, sighandler_t, siginfo_t, sigset_t, size_t};
 
 pub struct Stack<T> {
@@ -12,6 +13,7 @@ pub struct Stack<T> {
 
 impl<T> Stack<T> {
     pub fn new() -> Result<Self, String> {
+        #[allow(clippy::ptr_offset_with_cast)] 
         unsafe {
             let ptr = mem_map()?;
             MAPPED.push(ptr as usize);
@@ -68,6 +70,7 @@ unsafe fn mem_map() -> Result<*mut c_void, String> {
         return Err(errno_msg());
     }
 
+    #[allow(clippy::ptr_offset_with_cast)]
     if libc::mprotect(ptr.offset(PAGE_SIZE as isize), STACK_SIZE, libc::PROT_READ | libc::PROT_WRITE) == -1 {
         let errmsg = errno_msg();
         libc::munmap(ptr, MAP_SIZE);
@@ -94,10 +97,10 @@ unsafe extern "C" fn sig_handler(signum: c_int, siginfo: *const siginfo_t, conte
 
     if OLD_SIGACTION.sa_sigaction != 0 {
         let mut pre_mask: sigset_t = 0;
-        libc::sigprocmask(libc::SIG_BLOCK, OLD_SIGACTION.sa_mask as *const sigset_t, &mut pre_mask as *mut sigset_t);
-        let handler: extern "C" fn(c_int, *const siginfo_t, *const c_void) = mem::transmute(OLD_SIGACTION.sa_sigaction as *const c_void);
+        libc::sigprocmask(libc::SIG_BLOCK, addr_of!(OLD_SIGACTION.sa_mask), addr_of_mut!(pre_mask));
+        let handler: extern "C" fn(c_int, *const siginfo_t, *const c_void) = mem::transmute(addr_of!(OLD_SIGACTION.sa_sigaction));
         handler(signum, siginfo, context);
-        libc::sigprocmask(libc::SIG_SETMASK, &pre_mask as *const sigset_t, ptr::null_mut());
+        libc::sigprocmask(libc::SIG_SETMASK, addr_of!(pre_mask), ptr::null_mut());
     } else {
         exit(1);
     }
@@ -109,6 +112,7 @@ unsafe fn handle_out_of_stack(siginfo: *const siginfo_t) {
     };
     
     let fault_addr = siginfo.si_addr as usize;
+    #[allow(static_mut_refs)]
     for addr in &MAPPED {
         let addr = *addr;
         if fault_addr >= addr && fault_addr < addr + PAGE_SIZE {
@@ -136,8 +140,8 @@ unsafe fn install_sigaction_for_segv() -> Result<(), String> {
         sa_mask: 0
     };
     
-    libc::sigemptyset(&mut action.sa_mask as *mut sigset_t);// ignore error
-    if libc::sigaction(libc::SIGSEGV, &action as *const sigaction, &mut OLD_SIGACTION as *mut sigaction) == -1 {
+    libc::sigemptyset(addr_of_mut!(action.sa_mask));// ignore error
+    if libc::sigaction(libc::SIGSEGV, addr_of!(action), addr_of_mut!(OLD_SIGACTION)) == -1 {
         Err(errno_msg())
     } else {
         HAS_INSTALLED_HANDLER = true;
