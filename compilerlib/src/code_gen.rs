@@ -468,10 +468,14 @@ fn gen_expr(expr: &Expr, context: &mut Context, cp: &mut ConstantPool, code: &mu
                     let off2 = code.len() as u16;
                     code.push(0);code.push(0);
                     code.push(OP_CONST_TRUE);
+                    code.push(OP_GOTO);
+                    let off3 = code.len() as u16;
+                    code.push(0);code.push(0);
                     let target = code.len() as u16;
                     code.push(OP_CONST_FALSE);
                     patch(code, off, target);
                     patch(code, off2, target);
+                    patch(code, off3, code.len() as u16);
                 }
                 LogicOp::Or => {
                     gen_expr(&logic.left, context, cp, code)?;
@@ -483,10 +487,14 @@ fn gen_expr(expr: &Expr, context: &mut Context, cp: &mut ConstantPool, code: &mu
                     let off2 = code.len() as u16;
                     code.push(0);code.push(0);
                     code.push(OP_CONST_FALSE);
+                    code.push(OP_GOTO);
+                    let off3 = code.len() as u16;
+                    code.push(0);code.push(0);
                     let target = code.len() as u16;
                     code.push(OP_CONST_TRUE);
                     patch(code, off, target);
                     patch(code, off2, target);
+                    patch(code, off3, code.len() as u16);
                 }
             }
         }
