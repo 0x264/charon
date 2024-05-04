@@ -105,9 +105,11 @@ return: return to the caller
 
 pop: pop the top data out of the operand stack
 
-set_global: 1 arg in the code array after this opcode, u16, index in constant pool，the constant item must be CONSTANT_STRING,
+def_global: 1 arg in the code array after this opcode, u16, index in constant pool，the constant item must be CONSTANT_STRING,
             it's the name of the global variable.
-            pop the top data out of the operand stack, set it as the global variable's value
+            pop the top data out of the operand stack, set it as the global variable's value (allow redefine variable)
+
+set_global: like `def_global`, but error if the global variable not exists
 
 get_global: 1 arg in the code array after this opcode, u16, index in constant pool，the constant item must be CONSTANT_STRING,
             it's the name of the global variable.

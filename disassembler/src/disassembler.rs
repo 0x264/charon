@@ -108,6 +108,14 @@ fn disassemble_code(code: &[u8], cp: &[ConstantItem], intent: bool) -> Result<()
             
             OP_RETURN => new_plain_inst("RETURN"),
             OP_POP => new_plain_inst("POP"),
+
+            OP_DEF_GLOBAL => {
+                let idx = reader.next_u16()?;
+                let Some(ConstantItem::String(arg)) = cp.get(idx as usize) else {
+                    return Err("`DEF_GLOBAL` expect string argument as arg name".to_owned());
+                };
+                InstInfo::Plain(format!("DEF_GLOBAL  {idx}    // {arg}"))
+            }
             
             OP_SET_GLOBAL => {
                 let idx = reader.next_u16()?;

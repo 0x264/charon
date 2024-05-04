@@ -52,3 +52,5 @@ pub const OP_SET_FIELD: u8 = 34;
 pub const OP_GET_MEMBER: u8 = 35;
 
 pub const OP_DUP: u8 = 36;
+
+pub const OP_DEF_GLOBAL: u8 = 37;

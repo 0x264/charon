@@ -225,7 +225,7 @@ fn gen_stmt(stmt: &Stmt, context: &mut Context, cp: &mut ConstantPool, code: &mu
             }
             
             if context.is_global_scope() {
-                code.push(OP_SET_GLOBAL);
+                code.push(OP_DEF_GLOBAL);
                 code.extend_from_slice(&cp.const_string(&vardef.name).to_le_bytes());
             } else {
                 code.push(OP_SET_LOCAL);
