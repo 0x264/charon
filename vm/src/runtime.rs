@@ -9,7 +9,7 @@ use common::program::{Class, Function, Method, Program};
 use common::reader::LEReader;
 use common::Result;
 use common::opcode::*;
-use crate::ffi::StdPrint;
+use crate::ffi::{StdPrint, StdPrintln};
 use crate::stack::Stack;
 use crate::value::{ForeignFunction, Instance, MemMethod, Value};
 
@@ -104,12 +104,19 @@ pub fn exec(program: Program) -> Result<()> {
     
     // std function
     {
-        let ff = ForeignFunction {
+        let __print = ForeignFunction {
             name: "__print".to_owned(),
             params: 1,
             entry: Rc::new(StdPrint)
         };
-        globals.insert(ff.name.clone(), Value::ForeignFunction(ff));
+        globals.insert(__print.name.clone(), Value::ForeignFunction(__print));
+
+        let __println = ForeignFunction {
+            name: "__println".to_owned(),
+            params: 1,
+            entry: Rc::new(StdPrintln)
+        };
+        globals.insert(__println.name.clone(), Value::ForeignFunction(__println));
     }
 
     // create first frame
