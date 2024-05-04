@@ -394,6 +394,9 @@ fn gen_stmt(stmt: &Stmt, context: &mut Context, cp: &mut ConstantPool, code: &mu
             code.push(OP_RETURN);
         }
         Stmt::Block(block) => {
+            if context.callable_type == CallableType::None {
+                return Err("don't allow block statement in global scope".to_owned());
+            }
             context.push_scope();
             for stmt in block {
                 gen_stmt(stmt, context, cp, code)?;
