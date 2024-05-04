@@ -396,7 +396,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let Some(ConstantItem::String(var)) = program.constant_pool.get(idx as usize) else {
                     return Err("`SET_GLOBAL` expect string argument as global variable name".to_owned());
                 };
-                if globals.contains_key(var) {
+                if !globals.contains_key(var) {
                     return Err(format!("global variable: {var} used before define"));
                 }
                 let v = pop_stack(frame, stack);
