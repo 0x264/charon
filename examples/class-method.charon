@@ -1,0 +1,9 @@
+class A {
+    func print() {
+        __println("in class A's method: print()");
+        __println("this = " + this);
+    }
+}
+
+var a = A();
+a.print();

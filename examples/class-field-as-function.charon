@@ -1,0 +1,10 @@
+class A {}
+
+func add(x, y) {
+    return x + y;
+}
+
+var a = A();
+a.op = add;
+
+__println(a.op(1, 2));

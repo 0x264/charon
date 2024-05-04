@@ -1,0 +1,10 @@
+class A {
+    func getName() {
+        return this.name;
+    }
+}
+
+var a = A();
+a.name = "class-A";
+
+__println(a.getName());

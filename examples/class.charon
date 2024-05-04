@@ -1,0 +1,10 @@
+class A {}
+
+var a = A();
+a.longField = 1;
+a.doubleField = 2.2;
+a.stringField = "haha";
+
+__println(a.longField);
+__println(a.doubleField);
+__println(a.stringField);
