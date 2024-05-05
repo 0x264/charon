@@ -4,8 +4,7 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use compilerlib::code_gen::check_and_gen;
-use compilerlib::lexer::Lexer;
-use compilerlib::parser::Parser;
+use compilerlib::{lex, parse};
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -33,9 +32,9 @@ fn run(sourcecode_path: &str) -> Result<(), Box<dyn Error>> {
     
     let output_path = output_path(sourcecode_path)?;
     
-    let tokens = Lexer::new(&bytes).lex()?;
+    let tokens = lex(&bytes)?;
+    let program = parse(tokens, &bytes)?;
     drop(bytes);
-    let program = Parser::new(tokens).parse()?;
     let bytecode = check_and_gen(&program)?;
     fs::write(output_path, bytecode)?;
     Ok(())

@@ -4,8 +4,7 @@ use std::process::exit;
 use common::constant::MAGIC;
 use common::loader::Loader;
 use compilerlib::code_gen::check_and_gen;
-use compilerlib::lexer::Lexer;
-use compilerlib::parser::Parser;
+use compilerlib::{lex, parse};
 use crate::runtime::exec;
 
 mod value;
@@ -30,9 +29,9 @@ fn run(path: &str) -> Result<(), Box<dyn Error>> {
     let mut bytes = fs::read(path)?;
     
     if !is_bytecode(&bytes) {
-        let tokens = Lexer::new(&bytes).lex()?;
+        let tokens = lex(&bytes)?;
+        let program = parse(tokens, &bytes)?;
         drop(bytes);
-        let program = Parser::new(tokens).parse()?;
         bytes = check_and_gen(&program)?;
     }
     

@@ -42,8 +42,9 @@ impl Parser {
     }
     
     fn parse_function(&mut self) -> Result<FuncDecl> {
-        let Some(Token {kind: TokenKind::Identifier(name), offset: off }) = self.next() else {
-            return Err(Error::new("function name not found after keyword `func`".to_owned(), self.offset));
+        let tok = self.next_or_err()?;
+        let Token {kind: TokenKind::Identifier(name), offset: off } = tok else {
+            return Err(Error::new("function name not found after keyword `func`".to_owned(), tok.offset));
         };
         let func_off = *off;
         
@@ -77,8 +78,9 @@ impl Parser {
     }
 
     fn parse_class(&mut self) -> Result<ClassDecl> {
-        let Some(Token {kind: TokenKind::Identifier(name), offset: _ }) = self.next() else {
-            return Err(Error::new("class name not found after keyword `class`".to_owned(), self.offset));
+        let tok = self.next_or_err()?;
+        let Token {kind: TokenKind::Identifier(name), offset: _ } = tok else {
+            return Err(Error::new("class name not found after keyword `class`".to_owned(), tok.offset));
         };
         let name = name.to_owned();
         self.consume_or_err(&TokenKind::LBrace)?;
@@ -98,9 +100,7 @@ impl Parser {
     }
     
     fn parse_stmt(&mut self) -> Result<Stmt> {
-        let Some(tok) = self.next() else {
-            return Err(Error::new("unexpected end of file".to_owned(), self.offset));
-        };
+        let tok = self.next_or_err()?;
         
         let stmt = match &tok.kind {
             TokenKind::Var => Stmt::VarDef(self.parse_var_def()?),
@@ -125,8 +125,9 @@ impl Parser {
     }
     
     fn parse_var_def(&mut self) -> Result<VarDefStmt> {
-        let Some(Token {kind: TokenKind::Identifier(name), offset: _}) = self.next() else {
-            return Err(Error::new("expected variable name after keyword `var`".to_owned(), self.offset));
+        let tok = self.next_or_err()?;
+        let Token {kind: TokenKind::Identifier(name), offset: _} = tok else {
+            return Err(Error::new("expected variable name after keyword `var`".to_owned(), tok.offset));
         };
         let name = name.to_owned();
         
@@ -177,9 +178,7 @@ impl Parser {
     
     fn parse_assign_or_expr_stmt(&mut self) -> Result<Stmt> {
         let left = self.parse_expr()?;
-        let Some(tok) = self.next() else {
-            return Err(Error::new("unexpected end after expr in stmt".to_owned(), self.offset));
-        };
+        let tok = self.next_or_err()?;
         
         let op = match &tok.kind {
             TokenKind::Semi => return Ok(Stmt::Expr(Box::new(left))),
@@ -188,11 +187,11 @@ impl Parser {
             TokenKind::SubEq => AssignOp::SubAssign,
             TokenKind::StarEq => AssignOp::MultiplyAssign,
             TokenKind::SlashEq => AssignOp::DivideAssign,
-            _ => return Err(Error::new(format!("unexpected token: {tok:?}"), self.offset))
+            _ => return Err(Error::new(format!("unexpected token: {tok:?}"), tok.offset))
         };
         
         if !matches!(left, Expr::Getter(_) | Expr::GetVar(_)) {
-            return Err(Error::new("invalid assign target".to_owned(), self.offset));
+            return Err(Error::new("invalid assign target".to_owned(), tok.offset));
         }
         
         let value = Box::new(self.parse_expr()?);
@@ -311,8 +310,9 @@ impl Parser {
                 }
                 p = Expr::Call(CallExpr::new(Box::new(p), args));
             } else if self.consume(&TokenKind::Dot) {
-                let Some(Token {kind: TokenKind::Identifier(name), offset: _}) = self.next() else {
-                    return Err(Error::new("expected identifier".to_owned(), self.offset));
+                let tok = self.next_or_err()?;
+                let Token {kind: TokenKind::Identifier(name), offset: _} = tok else {
+                    return Err(Error::new("expected identifier".to_owned(), tok.offset));
                 };
                 p = Expr::Getter(GetterExpr::new(Box::new(p), name.to_owned()));
             } else {
@@ -323,9 +323,7 @@ impl Parser {
     }
     
     fn primary(&mut self) -> Result<Expr> {
-        let Some(tok) = self.next() else {
-            return Err(Error::new("unexpected end of file".to_owned(), self.offset));
-        };
+        let tok = self.next_or_err()?;
         
         let expr = match &tok.kind {
             TokenKind::Long(v) => Expr::Long(*v),
@@ -381,7 +379,7 @@ impl Parser {
                 Err(Error::new(format!("expected token: {tok:?}, got: {:?}", t.kind), t.offset))
             }
         } else {
-            Err(Error::new(format!("failed to consume token: {tok:?}, end of file"), self.offset))
+            Err(Error::new(format!("failed to consume token: {tok:?}, end of file"), usize::MAX))
         }
     }
 
@@ -394,6 +392,16 @@ impl Parser {
             self.offset += 1;
             t
         })
+    }
+    
+    fn next_or_err(&mut self) -> Result<&Token> {
+        match self.tokens.get(self.offset) {
+            None => Err(Error::new("unexpected end of file".to_owned(), usize::MAX)),
+            Some(t) => {
+                self.offset += 1;
+                Ok(t)
+            }
+        }
     }
 
     fn advance(&mut self) {
