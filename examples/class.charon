@@ -1,3 +1,4 @@
+#!/usr/bin/env charon
 class A {}
 
 var a = A();

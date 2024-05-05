@@ -1,1 +1,2 @@
-__print(2 + 4 * (3 - 1));
+#!/usr/bin/env charon
+__println(2 + 4 * (3 - 1));

@@ -1,2 +1,3 @@
+#!/usr/bin/env charon
 var my_print = __print;
 my_print("hello, " + "charon" + "\n");

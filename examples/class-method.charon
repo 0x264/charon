@@ -1,3 +1,4 @@
+#!/usr/bin/env charon
 class A {
     func print() {
         __println("in class A's method: print()");

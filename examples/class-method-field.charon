@@ -1,3 +1,4 @@
+#!/usr/bin/env charon
 class A {
     func getName() {
         return this.name;

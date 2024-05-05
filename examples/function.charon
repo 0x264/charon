@@ -1,7 +1,8 @@
+#!/usr/bin/env charon
 var a = 1;
 var b = 2;
 
-__print(add(a, b));
+__println(add(a, b));
 
 
 func add(x, y) {

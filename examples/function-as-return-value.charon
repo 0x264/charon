@@ -1,3 +1,4 @@
+#!/usr/bin/env charon
 func add(x, y) {
     return x + y;
 }
@@ -7,4 +8,4 @@ func getOperator() {
 }
 
 var a = getOperator()(1, 2);
-__print(a);
+__println(a);
