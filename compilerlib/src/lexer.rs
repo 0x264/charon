@@ -98,6 +98,14 @@ impl Lexer<'_> {
                 } else {
                     TokenKind::Star
                 }
+                '#' => {
+                    while let Some(v) = self.next() {
+                        if v == b'\n' {
+                            break;
+                        }
+                    }
+                    continue;
+                }
                 '/' => if self.consume('/') {
                     while let Some(v) = self.next() {
                         if v == b'\n' {
