@@ -11,8 +11,22 @@ pub mod line_column_info;
 
 pub type Result<T> = std::result::Result<T, String>;
 
+static mut IS_TERMINAL: Option<bool> = None;
+
+fn is_terminal() -> bool {
+    unsafe {
+        if let Some(v) = IS_TERMINAL {
+            return v;
+        }
+
+        let v = io::stderr().is_terminal();
+        IS_TERMINAL = Some(v);
+        v
+    }
+}
+
 pub fn err_print<T: Display + ?Sized>(err: &T) {
-    let is_terminal = io::stderr().is_terminal();
+    let is_terminal = is_terminal();
     if is_terminal {
         eprint!("[31m");
     }
