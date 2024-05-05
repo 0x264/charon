@@ -1,0 +1,26 @@
+#!/usr/bin/env charon
+func error() {
+    var long = 1;
+    var string = "haha";
+
+    // error, the left operand of '+' should be of type 'string'
+    return long + string;
+}
+
+func ok() {
+    var long = 1;
+    var string = "haha";
+
+    return string + long;
+}
+
+func ok2() {
+    var long = 1;
+    var string = "haha";
+
+    return "" + long + string;
+}
+
+__println(ok());
+__println(ok2());
+__println(error());
