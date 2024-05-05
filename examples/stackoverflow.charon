@@ -1,0 +1,11 @@
+#!/usr/bin/env charon
+
+func f1() {
+    return f2();
+}
+
+func f2() {
+    return f1();
+}
+
+f1();
