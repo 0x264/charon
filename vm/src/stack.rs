@@ -132,12 +132,18 @@ unsafe fn handle_out_of_stack(siginfo: *const siginfo_t) {
         let addr = *addr;
         if fault_addr >= addr && fault_addr < addr + PAGE_SIZE {
             err_println("stack underflow");
+            if let Some(notifier) = &STACK_ERROR_NOTIFIER {
+                notifier.on_error();
+            }
             exit(1);
         }
         
         if fault_addr >= addr + STACK_SIZE + PAGE_SIZE
             && fault_addr < addr + STACK_SIZE + PAGE_SIZE * 2 {
             err_println("stack overflow");
+            if let Some(notifier) = &STACK_ERROR_NOTIFIER {
+                notifier.on_error();
+            }
             exit(1);
         }
     }
@@ -174,3 +180,9 @@ unsafe fn install_sigaction_for_segv() -> Result<(), String> {
         
     Ok(())
 }
+
+pub trait StackError {
+    fn on_error(&self);
+}
+
+pub static mut STACK_ERROR_NOTIFIER: Option<Box<dyn StackError>> = None;

@@ -10,7 +10,7 @@ use common::reader::LEReader;
 use common::{err_println, Result};
 use common::opcode::*;
 use crate::ffi::{StdPrint, StdPrintln};
-use crate::stack::Stack;
+use crate::stack::{Stack, STACK_ERROR_NOTIFIER, StackError};
 use crate::value::{ForeignFunction, Instance, MemMethod, Value};
 
 enum FrameType {
@@ -118,6 +118,10 @@ pub fn exec(program: Program) -> Result<()> {
         };
         globals.insert(__println.name.clone(), Value::ForeignFunction(__println));
     }
+    
+    unsafe {
+        STACK_ERROR_NOTIFIER = Some(Box::new(ScopedStackError::new(&frames)));
+    }
 
     // create first frame
     frames.push(Frame::new(FrameType::Func(entry as *const Function)));
@@ -142,6 +146,10 @@ pub fn exec(program: Program) -> Result<()> {
         }
     }
 
+    unsafe {
+        STACK_ERROR_NOTIFIER = None;
+    }
+    
     Ok(())
 }
 
@@ -537,6 +545,11 @@ fn is_false(v: &Value) -> bool {
 
 fn print_error_and_exit(msg: &str, frames: &[Frame]) -> ! {
     err_println(&format!("Error:  {msg}"));
+    print_stack_frames(frames);
+    exit(1);
+}
+
+fn print_stack_frames(frames: &[Frame]) {
     for frame in frames.iter().rev() {
         match &frame.frame_type {
             FrameType::Func(f) => {
@@ -551,5 +564,23 @@ fn print_error_and_exit(msg: &str, frames: &[Frame]) -> ! {
             }
         }
     }
-    exit(1);
+}
+
+struct ScopedStackError {
+    frames: *const Vec<Frame>
+}
+
+impl ScopedStackError {
+    fn new(frames: &Vec<Frame>) -> Self {
+        Self {
+            frames: frames as *const Vec<Frame>
+        }
+    }
+}
+
+impl StackError for ScopedStackError {
+    fn on_error(&self) {
+        let frames = unsafe {&*self.frames};
+        print_stack_frames(frames);
+    }
 }
