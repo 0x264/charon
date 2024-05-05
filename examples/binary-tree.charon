@@ -1,0 +1,52 @@
+#!/usr/bin/env charon
+
+class Node {}
+
+//              10
+//            /    \
+//           6      14
+//         /  \    /  \
+//        4    8  12  16
+//
+func createBinaryTree() {
+    var left = Node();
+    left.value = 4;
+
+    var right = Node();
+    right.value = 8;
+
+    var l = Node();
+    l.value = 6;
+    l.left = left;
+    l.right = right;
+
+    var left = Node();
+    left.value = 12;
+
+    var right = Node();
+    right.value = 16;
+
+    var r = Node();
+    r.value = 14;
+    r.left = left;
+    r.right = right;
+
+    var root = Node();
+    root.value = 10;
+    root.left = l;
+    root.right = r;
+
+    return root;
+}
+
+func inOrder(root) {
+    if (root.left) {
+        inOrder(root.left);
+    }
+    __println(root.value);
+    if (root.right) {
+        inOrder(root.right);
+    }
+}
+
+inOrder(createBinaryTree());
