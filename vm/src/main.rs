@@ -2,6 +2,7 @@ use std::{env, fs};
 use std::error::Error;
 use std::process::exit;
 use common::constant::MAGIC;
+use common::err_println;
 use common::loader::Loader;
 use compilerlib::code_gen::check_and_gen;
 use compilerlib::{lex, parse};
@@ -15,12 +16,12 @@ mod ffi;
 fn main() {
     let args: Vec<_> = env::args().collect();
     if args.len() != 2 {
-        eprintln!("usage: charon [charon byte code file path]");
+        err_println("usage: charon [charon byte code file path]");
         exit(1);
     }
 
     if let Err(e) = run(unsafe {args.get_unchecked(1)}) {
-        eprintln!("{e}");
+        err_println(&format!("{e}"));
         exit(1);
     }
 }

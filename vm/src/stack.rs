@@ -4,6 +4,7 @@ use std::{mem, ptr};
 use std::process::exit;
 use std::ptr::{addr_of, addr_of_mut};
 use libc::{c_int, SA_SIGINFO, sigaction, sighandler_t, siginfo_t, sigset_t, size_t};
+use common::err_println;
 
 pub struct Stack<T> {
     ptr: *mut c_void,
@@ -19,7 +20,7 @@ impl<T> Stack<T> {
             MAPPED.push(ptr as usize);
 
             if let Err(msg) = install_sigaction_for_segv() {
-                eprintln!("failed to install sigaction for SIGSEGV: {msg}");
+                err_println(&format!("failed to install sigaction for SIGSEGV: {msg}"));
             }
             
             Ok(Self {
@@ -130,13 +131,13 @@ unsafe fn handle_out_of_stack(siginfo: *const siginfo_t) {
     for addr in &MAPPED {
         let addr = *addr;
         if fault_addr >= addr && fault_addr < addr + PAGE_SIZE {
-            eprintln!("stack underflow");
+            err_println("stack underflow");
             exit(1);
         }
         
         if fault_addr >= addr + STACK_SIZE + PAGE_SIZE
             && fault_addr < addr + STACK_SIZE + PAGE_SIZE * 2 {
-            eprintln!("stack overflow");
+            err_println("stack overflow");
             exit(1);
         }
     }

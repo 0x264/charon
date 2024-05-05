@@ -3,20 +3,21 @@ use std::env::current_dir;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::exit;
+use common::err_println;
 use compilerlib::code_gen::check_and_gen;
 use compilerlib::{lex, parse};
 
 fn main() {
     let args: Vec<_> = env::args().collect();
     if args.len() != 2 {
-        eprintln!("usage: charonc [charon source file path]");
+        err_println("usage: charonc [charon source file path]");
         exit(1);
     }
 
     let sourcecode_path = unsafe {args.get_unchecked(1)};
     
     if let Err(e) = run(sourcecode_path) {
-        eprintln!("{e}");
+        err_println(&format!("{e}"));
         exit(1);
     }
 }
@@ -25,7 +26,7 @@ fn run(sourcecode_path: &str) -> Result<(), Box<dyn Error>> {
     let bytes = match fs::read(sourcecode_path) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("failed to read source code file: {sourcecode_path}, with error: {e}");
+            err_println(&format!("failed to read source code file: {sourcecode_path}, with error: {e}"));
             exit(1);
         }
     };

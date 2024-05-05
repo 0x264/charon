@@ -7,7 +7,7 @@ use ahash::{HashMap, HashMapExt};
 use common::constant::{ConstantItem, ENTRY_NAME};
 use common::program::{Class, Function, Method, Program};
 use common::reader::LEReader;
-use common::Result;
+use common::{err_println, Result};
 use common::opcode::*;
 use crate::ffi::{StdPrint, StdPrintln};
 use crate::stack::Stack;
@@ -536,18 +536,18 @@ fn is_false(v: &Value) -> bool {
 }
 
 fn print_error_and_exit(msg: &str, frames: &[Frame]) -> ! {
-    eprintln!("Error:  {msg}");
+    err_println(&format!("Error:  {msg}"));
     for frame in frames.iter().rev() {
         match &frame.frame_type {
             FrameType::Func(f) => {
                 let name = unsafe {&(**f).name};
                 if name != ENTRY_NAME {
-                    eprintln!("      in function: {name}");
+                    err_println(&format!("      in function: {name}"));
                 }
             }
             FrameType::Method(m) => {
                 let method = unsafe {&**m};
-                eprintln!("      in method:  {}.{}", method.class_name, method.name);
+                err_println(&format!("      in method:  {}.{}", method.class_name, method.name));
             }
         }
     }
