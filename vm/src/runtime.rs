@@ -1,4 +1,4 @@
-use std::cell::{Cell, RefCell};
+use std::cell::Cell;
 use std::collections::VecDeque;
 use std::mem;
 use std::process::exit;
@@ -242,7 +242,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                             Value::String(l)
                         }
                         Value::Instance(i) => {
-                            l.push_str(&format!("<class: {}'s instance>", unsafe {&(*i.borrow().class).name}));
+                            l.push_str(&format!("<class: {}'s instance>", unsafe {(&*i).class_name()}));
                             Value::String(l)
                         }
                         Value::Function(f) => {
@@ -278,13 +278,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let res = if mem::discriminant(&l) != mem::discriminant(&r) {
                     false
                 } else {
-                    match l {
-                        Value::Instance(l) => {
-                            let r = unsafe {r.as_instance_unchecked()};
-                            Rc::as_ptr(&l) == Rc::as_ptr(r)
-                        }
-                        _ => l == r
-                    }
+                    l == r
                 };
                 push_stack(frame, stack, Value::Bool(res));
             }
@@ -294,13 +288,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let res = if mem::discriminant(&l) != mem::discriminant(&r) {
                     true
                 } else {
-                    match l {
-                        Value::Instance(l) => {
-                            let r = unsafe {r.as_instance_unchecked()};
-                            Rc::as_ptr(&l) != Rc::as_ptr(r)
-                        }
-                        _ => l != r
-                    }
+                    l != r
                 };
                 push_stack(frame, stack, Value::Bool(res));
             }
@@ -339,7 +327,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                             return Err(format!("don't support pass arguments to class's constructor: {}", unsafe {&*class}.name));
                         }
                         pop_stack(frame, stack);// owner
-                        push_stack(frame, stack, Value::Instance(Rc::new(RefCell::new(Instance::new(class)))));
+                        push_stack(frame, stack, Value::Instance(Box::into_raw(Box::new(Instance::new(class)))));
                     }
                     Value::Function(func) => {
                         let new_frame = Frame::new(FrameType::Func(func));
@@ -362,7 +350,7 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                             return Err(format!("method: {}'s param count: {}, but got: {params}", method.name(), method.param_count()));
                         }
                         let sp = frame.sp.get();
-                        stack.write(sp as isize, Value::Instance(method.instance.clone()));// this
+                        stack.write(sp as isize, Value::Instance(method.instance));// this
                         new_frame.sb.set(sp - params as usize);
                         new_frame.sp.set(new_frame.sb.get() + method.max_locals() as usize);
 
@@ -457,11 +445,12 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let owner = pop_stack(frame, stack);
                 match owner {
                     Value::Instance(instance) => {
-                        if unsafe {(*instance.borrow().class).methods.contains_key(var)} {
+                        let instance = unsafe {&mut *instance};
+                        if unsafe {(&*(instance.class)).methods.contains_key(var)} {
                             return Err(format!("class: {} already has method named: {var}, can't assign new value to it"
-                                               , unsafe {&(*instance.borrow().class).name}));
+                                               , instance.class_name()));
                         }
-                        instance.borrow_mut().fields.insert(var.to_owned(), v);
+                        instance.fields.insert(var.to_owned(), v);
                     }
                     _ => return Err("`SET_FIELD` owner should be class's instance".to_owned())
                 }
@@ -475,10 +464,10 @@ fn run_code(frame: &Frame, stack: &Stack<Value>, globals: &mut HashMap<String, V
                 let owner = pop_stack(frame, stack);
                 match owner {
                     Value::Instance(instance) => {
-                        let class = unsafe {&(*instance.borrow().class)};
+                        let class = unsafe {&*(*instance).class};
                         let v = if let Some(method) = class.methods.get(name) {
-                            Value::Method(MemMethod::new(instance.clone(), method as *const Method))
-                        } else if let Some(v) = instance.borrow().fields.get(name) {
+                            Value::Method(MemMethod::new(instance, method as *const Method))
+                        } else if let Some(v) = unsafe {(&*instance).fields.get(name)} {
                             v.clone()
                         } else {
                             Value::Null

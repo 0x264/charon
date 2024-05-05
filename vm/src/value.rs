@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 use ahash::{HashMap, HashMapExt};
 use common::program::{Class, Function, Method};
@@ -14,7 +13,7 @@ pub enum Value {
     Double(f64),
     String(String),
     Class(*const Class),
-    Instance(Rc<RefCell<Instance>>),
+    Instance(*mut Instance),
     Function(*const Function),
     Method(MemMethod),
     ForeignFunction(ForeignFunction)
@@ -39,12 +38,6 @@ impl Value {
             _ => unreachable!()
         }
     }
-    pub unsafe fn as_instance_unchecked(&self) -> &Rc<RefCell<Instance>> {
-        match self { 
-            Value::Instance(v) => v,
-            _ => unreachable!()
-        }
-    }
 }
 
 #[derive(PartialEq)]
@@ -59,6 +52,10 @@ impl Instance {
             class,
             fields: HashMap::new()
         }
+    }
+    
+    pub fn class_name(&self) -> &str {
+        unsafe {&(*self.class).name}
     }
 }
 
@@ -79,14 +76,14 @@ impl PartialEq for ForeignFunction {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct MemMethod {
-    pub instance: Rc<RefCell<Instance>>,
+    pub instance: *mut Instance,
     pub method: *const Method
 }
 
 impl MemMethod {
-    pub fn new(instance: Rc<RefCell<Instance>>, method: *const Method) -> Self {
+    pub fn new(instance: *mut Instance, method: *const Method) -> Self {
         Self { instance, method }
     }
     
@@ -104,12 +101,5 @@ impl MemMethod {
 
     pub fn class_name(&self) -> &str {
         unsafe {&(*self.method).class_name}
-    }
-}
-
-impl PartialEq for MemMethod {
-    fn eq(&self, other: &Self) -> bool {
-        std::ptr::addr_eq(self.method, other.method)
-            && std::ptr::addr_eq(Rc::as_ptr(&self.instance), Rc::as_ptr(&other.instance))
     }
 }
