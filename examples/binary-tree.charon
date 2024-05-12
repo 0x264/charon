@@ -1,6 +1,11 @@
 #!/usr/bin/env charon
 
-class Node {}
+class Node {
+    func addChildren(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+}
 
 //              10
 //            /    \
@@ -17,8 +22,7 @@ func createBinaryTree() {
 
     var l = Node();
     l.value = 6;
-    l.left = left;
-    l.right = right;
+    l.addChildren(left, right);
 
     var left = Node();
     left.value = 12;
@@ -28,13 +32,11 @@ func createBinaryTree() {
 
     var r = Node();
     r.value = 14;
-    r.left = left;
-    r.right = right;
+    r.addChildren(left, right);
 
     var root = Node();
     root.value = 10;
-    root.left = l;
-    root.right = r;
+    root.addChildren(l, r);
 
     return root;
 }
